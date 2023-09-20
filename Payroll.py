@@ -48,6 +48,7 @@ class class_Payroll:
 		file.close
 		for i in range(len(self.source_strings)):
 			self.source_strings[i] = self.source_strings[i].replace('\n','')
+			self.source_strings[i] = self.source_strings[i].replace('СекцияДокумент=Банковский ордер','СекцияДокумент=Платежное поручение')
 
 
 	def Save_strings_to_file(self, path_to_file:str) -> None:

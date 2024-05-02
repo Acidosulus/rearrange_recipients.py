@@ -6,6 +6,8 @@ from click import echo, style
 import pandas as pd
 import sys
 import time
+from rich import print
+
 
 class Data_Store:
 	def __init__(self):
@@ -129,8 +131,8 @@ for pay in payroll.pays:
 		ld_to_excel['Распознанный СТЕК название договора'].append(pay.recognized['agreement_name_by_inn'])
 	print()
 
-for key in ld_to_excel:
-	print(key)
+# for key in ld_to_excel:
+# 	print(key)
 
 
 df = pd.DataFrame(ld_to_excel)

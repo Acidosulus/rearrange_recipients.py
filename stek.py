@@ -3,7 +3,7 @@ import urllib
 import pyodbc
 from click import echo, style
 import configparser  # импортируем библиотеку
-
+from rich import print
 
 
 

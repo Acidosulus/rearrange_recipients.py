@@ -1,5 +1,8 @@
 from click import echo, style
 import configparser  # импортируем библиотеку
+from rich import print
+from pathlib import Path
+import json
 
 def sx(source_string='', left_split='', right_split='', index=1) -> str:
 	if source_string.count(
@@ -38,6 +41,8 @@ def sxosl(source_list:list, left_split:str, right_split:str, index=1, include_en
 
 class class_Payroll:
 	def __init__(self, path_to_file:str) -> None:
+		self.date_from_file_name = Path(path_to_file).name[:10] # this date will be substitution into the field ['Дата']
+		print({'date from file':self.date_from_file_name})
 		self.path_to_source_file = path_to_file
 		self.Load_strings_from_file(self.path_to_source_file)
 
@@ -48,7 +53,9 @@ class class_Payroll:
 		file.close
 		for i in range(len(self.source_strings)):
 			self.source_strings[i] = self.source_strings[i].replace('\n','')
-			self.source_strings[i] = self.source_strings[i].replace('СекцияДокумент=Банковский ордер','СекцияДокумент=Платежное поручение').replace('СекцияДокумент=Платежный ордер','СекцияДокумент=Платежное поручение')
+			self.source_strings[i] = self.source_strings[i].\
+											replace('СекцияДокумент=Банковский ордер','СекцияДокумент=Платежное поручение').\
+											replace('СекцияДокумент=Платежный ордер','СекцияДокумент=Платежное поручение')
 
 
 	def Save_strings_to_file(self, path_to_file:str) -> None:
@@ -77,16 +84,38 @@ class class_Payroll:
 		self.list_of_pays = []
 		for i in range(self.source_strings.count('СекцияДокумент=Банковский ордер')):
 			section = sxosl(self.source_strings,'СекцияДокумент=Банковский ордер','КонецДокумента',i+1,True)
+			if type(section) == list:
+				for i in range(len(section)): # replace a date payment order from those bank set onto the date from whole document
+					if 'Дата=' in section[i]:
+						print(f'замена: ' + section[i] + ' на ' + f'Дата={self.date_from_file_name}')
+						section[i] = f'Дата={self.date_from_file_name}'
 			self.list_of_pays.append(section)
-			#print(section)
+			# print('=========section======Банковский ордер===',section)
 		for i in range(self.source_strings.count('СекцияДокумент=Платежное поручение')):
 			section = sxosl(self.source_strings,'СекцияДокумент=Платежное поручение','КонецДокумента',i+1,True)
+			if type(section) == list:
+				for i in range(len(section)): # replace a date payment order from those bank set onto the date from whole document
+					if 'Дата=' in section[i]:
+						print(f'замена: ' + section[i] + ' на ' + f'Дата={self.date_from_file_name}')
+						section[i] = f'Дата={self.date_from_file_name}'
 			self.list_of_pays.append(section)
-			#print(section)
+			# print('=========section======Платежное поручение===',section)
 		self.pays=[]
 		for ll in self.list_of_pays:
 			self.pays.append(Pay(ll))
+		self.save_to_file('dump.json')
 
+	def save_to_file(self, filename:str):
+		with open(file=filename, mode='w', encoding='utf8') as file:
+			file.write(json.dumps( [
+										{	'source':x.source,
+		   									'inn':x.inn,
+											'kpp':x.kpp,
+											'purose':x.purpose,
+											'recognized':x.recognized}
+										for x in self.pays
+									],
+								 ensure_ascii=False, indent=4 ))
 
 class Pay():
 	def __init__(self, source_list:list) -> None:
@@ -124,9 +153,7 @@ class Pay():
 			echo(output_message+'  '+style(text=self.recognized['comment'], fg='bright_cyan'))
 		return ll
 
-
 #payroll = class_Payroll('.\\Октябрь\\31.10.2022\\31.10.2022_2290.txt')
 #payroll.Load_strings_from_file(payroll.path_to_source_file)
 #payroll.Parse_Strings_from_File()
 #print(payroll.list_of_pays)
-	
